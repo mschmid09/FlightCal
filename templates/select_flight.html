@@ -307,10 +307,9 @@
                 return;
             }
             
-            // Validate datetime-local format (YYYY-MM-DDTHH:MM)
-            const datetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-            if (!datetimeRegex.test(depValue) || !datetimeRegex.test(arrValue)) {
-                alert('Invalid datetime format.');
+            // Validate departure is before arrival
+            if (new Date(depValue) >= new Date(arrValue)) {
+                alert('Departure time must be before arrival time.');
                 return;
             }
             

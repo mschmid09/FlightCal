@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pandas as pd
 from datetime import datetime
@@ -92,7 +93,6 @@ def create_manual_event():
                 raise ValueError(f"Missing required field: {field}")
         
         # Validate airport codes (should be 3 uppercase letters)
-        import re
         if not re.match(r"^[A-Z]{3}$", flight_data["origin_airport_code"]):
             raise ValueError("Origin airport code must be 3 uppercase letters")
         if not re.match(r"^[A-Z]{3}$", flight_data["destination_airport_code"]):
