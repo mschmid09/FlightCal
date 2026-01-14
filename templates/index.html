@@ -64,6 +64,20 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+        .manual-entry-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .manual-entry-button:hover {
+            background-color: #218838;
+        }
         .emoji {
             font-size: 5rem;
             cursor: pointer;
@@ -95,6 +109,7 @@
         <div class="error-message">
         {{ error }}
         </div>
+        <button class="manual-entry-button" onclick="window.location.href='/manual_entry'">Enter Flight Details Manually</button>
     {% endif %}
 
     <p>Enter your flight number and date to create an iCal event.</p>

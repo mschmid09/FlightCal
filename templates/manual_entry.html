@@ -1,0 +1,225 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlightCal - Manual Entry</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            flex: 1;
+            text-align: left;
+        }
+        .form-group.full-width {
+            flex: 1 1 100%;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="datetime-local"], select {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #6c757d;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        .back-button:hover {
+            background-color: #545b62;
+        }
+        .emoji {
+            font-size: 5rem;
+            cursor: pointer;
+            transition: transform 0.5s ease-in-out;
+        }
+        .emoji.clicked {
+            transform: rotate(360deg);
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        .required {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="emoji">✈️</div>
+    <h1>Manual Flight Entry</h1>
+    <p>Enter your flight details manually</p>
+    
+    <div class="form-container">
+        <form action="/create_manual_event" method="post">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="flight_number">Flight Number: <span class="required">*</span></label>
+                    <input type="text" id="flight_number" name="flight_number" required oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')">
+                </div>
+                <div class="form-group">
+                    <label for="airline_name">Airline Name: <span class="required">*</span></label>
+                    <input type="text" id="airline_name" name="airline_name" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="origin_airport">Origin Airport: <span class="required">*</span></label>
+                    <input type="text" id="origin_airport" name="origin_airport" required placeholder="e.g., John F. Kennedy Intl">
+                </div>
+                <div class="form-group">
+                    <label for="origin_airport_code">Origin Code: <span class="required">*</span></label>
+                    <input type="text" id="origin_airport_code" name="origin_airport_code" required maxlength="3" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')" placeholder="e.g., JFK">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="destination_airport">Destination Airport: <span class="required">*</span></label>
+                    <input type="text" id="destination_airport" name="destination_airport" required placeholder="e.g., Los Angeles Intl">
+                </div>
+                <div class="form-group">
+                    <label for="destination_airport_code">Destination Code: <span class="required">*</span></label>
+                    <input type="text" id="destination_airport_code" name="destination_airport_code" required maxlength="3" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')" placeholder="e.g., LAX">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="scheduled_departure">Departure Time: <span class="required">*</span></label>
+                    <input type="datetime-local" id="scheduled_departure" name="scheduled_departure" required>
+                </div>
+                <div class="form-group">
+                    <label for="scheduled_arrival">Arrival Time: <span class="required">*</span></label>
+                    <input type="datetime-local" id="scheduled_arrival" name="scheduled_arrival" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="origin_timezone">Origin Timezone: <span class="required">*</span></label>
+                    <select id="origin_timezone" name="origin_timezone" required>
+                        <option value="">Select timezone...</option>
+                        <option value="America/New_York">America/New_York (EST/EDT)</option>
+                        <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                        <option value="America/Denver">America/Denver (MST/MDT)</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                        <option value="America/Anchorage">America/Anchorage (AKST/AKDT)</option>
+                        <option value="Pacific/Honolulu">Pacific/Honolulu (HST)</option>
+                        <option value="Europe/London">Europe/London (GMT/BST)</option>
+                        <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                        <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                        <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+                        <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                        <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                        <option value="Asia/Hong_Kong">Asia/Hong_Kong (HKT)</option>
+                        <option value="Australia/Sydney">Australia/Sydney (AEDT/AEST)</option>
+                        <option value="UTC">UTC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="destination_timezone">Destination Timezone: <span class="required">*</span></label>
+                    <select id="destination_timezone" name="destination_timezone" required>
+                        <option value="">Select timezone...</option>
+                        <option value="America/New_York">America/New_York (EST/EDT)</option>
+                        <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                        <option value="America/Denver">America/Denver (MST/MDT)</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                        <option value="America/Anchorage">America/Anchorage (AKST/AKDT)</option>
+                        <option value="Pacific/Honolulu">Pacific/Honolulu (HST)</option>
+                        <option value="Europe/London">Europe/London (GMT/BST)</option>
+                        <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                        <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                        <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
+                        <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                        <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                        <option value="Asia/Hong_Kong">Asia/Hong_Kong (HKT)</option>
+                        <option value="Australia/Sydney">Australia/Sydney (AEDT/AEST)</option>
+                        <option value="UTC">UTC</option>
+                    </select>
+                </div>
+            </div>
+            
+            <input type="submit" value="Create Event">
+            <button type="button" class="back-button" onclick="window.location.href='/'">Back to Search</button>
+        </form>
+    </div>
+    
+    <footer>
+        Don't miss your flight! 🛫<br>
+        Contribute to this project on <a href="https://github.com/mschmidoev/FlightCal" target="_blank">GitHub</a><br>
+        Made with ❤️ by <a href="https://mschm.id" target="_blank">Michael Schmid</a>
+    </footer>
+    
+    <script>
+        document.querySelector('.emoji').addEventListener('click', function() {
+            this.classList.toggle('clicked');
+        });
+    </script>
+</body>
+</html>
