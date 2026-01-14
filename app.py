@@ -2,6 +2,7 @@ import json
 import os
 
 import pandas as pd
+from datetime import datetime
 from flask import Flask, render_template, request, send_file, session
 
 from core import get_flight, make_ics_from_selected_df_index, make_ics_from_manual_data
@@ -79,6 +80,30 @@ def create_manual_event():
             "origin_timezone": request.form.get("origin_timezone"),
             "destination_timezone": request.form.get("destination_timezone"),
         }
+        
+        # Validate required fields
+        required_fields = [
+            "flight_number", "airline_name", "origin_airport", "origin_airport_code",
+            "destination_airport", "destination_airport_code", "scheduled_departure",
+            "scheduled_arrival", "origin_timezone", "destination_timezone"
+        ]
+        for field in required_fields:
+            if not flight_data.get(field):
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Validate airport codes (should be 3 uppercase letters)
+        import re
+        if not re.match(r"^[A-Z]{3}$", flight_data["origin_airport_code"]):
+            raise ValueError("Origin airport code must be 3 uppercase letters")
+        if not re.match(r"^[A-Z]{3}$", flight_data["destination_airport_code"]):
+            raise ValueError("Destination airport code must be 3 uppercase letters")
+        
+        # Validate datetime format (YYYY-MM-DDTHH:MM)
+        try:
+            datetime.strptime(flight_data["scheduled_departure"], "%Y-%m-%dT%H:%M")
+            datetime.strptime(flight_data["scheduled_arrival"], "%Y-%m-%dT%H:%M")
+        except ValueError:
+            raise ValueError("Invalid datetime format for departure or arrival time")
         
         # Create iCal file from manual data
         ics_data = make_ics_from_manual_data(flight_data)

@@ -1,6 +1,6 @@
 import io
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 import icalendar
 import pandas as pd
@@ -227,7 +227,7 @@ def make_ical_event(data: dict):
         "description",
         f'{data["airline_name"]} flight {data["flight_number"]} / Departs {data["origin_airport"]}, {data["origin_airport_code"]}',
     )
-    event.add("dtstamp", datetime.now())
+    event.add("dtstamp", datetime.now(dt_timezone.utc))
 
     event.add("status", "CONFIRMED")
 
@@ -273,7 +273,7 @@ def make_ics_from_manual_data(data: dict):
         "description",
         f'{data["airline_name"]} flight {data["flight_number"]} / Departs {data["origin_airport"]}, {data["origin_airport_code"]}',
     )
-    event.add("dtstamp", datetime.now())
+    event.add("dtstamp", datetime.now(dt_timezone.utc))
     event.add("status", "CONFIRMED")
 
     cal.add_component(event)

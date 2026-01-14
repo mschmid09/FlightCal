@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -305,9 +307,23 @@
                 return;
             }
             
+            // Validate datetime-local format (YYYY-MM-DDTHH:MM)
+            const datetimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+            if (!datetimeRegex.test(depValue) || !datetimeRegex.test(arrValue)) {
+                alert('Invalid datetime format.');
+                return;
+            }
+            
             // Convert from datetime-local format to "YYYYMMDD HHMM"
-            const depFormatted = depValue.replace(/[-:]/g, '').replace('T', ' ');
-            const arrFormatted = arrValue.replace(/[-:]/g, '').replace('T', ' ');
+            const depParts = depValue.split('T');
+            const depDate = depParts[0].replace(/-/g, '');
+            const depTime = depParts[1].replace(/:/g, '');
+            const depFormatted = depDate + ' ' + depTime;
+            
+            const arrParts = arrValue.split('T');
+            const arrDate = arrParts[0].replace(/-/g, '');
+            const arrTime = arrParts[1].replace(/:/g, '');
+            const arrFormatted = arrDate + ' ' + arrTime;
             
             // Update hidden form fields
             document.getElementById('custom-departure-' + currentEditingIndex).value = depFormatted;
