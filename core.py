@@ -5,9 +5,37 @@ from datetime import datetime, timedelta, timezone as dt_timezone
 import icalendar
 import pandas as pd
 from pyflightdata import FlightData
-from pytz import timezone
+from pytz import timezone, all_timezones, utc
 
 f = FlightData()
+
+
+def get_timezones_with_offsets():
+    """Get all timezones with their UTC offsets."""
+    timezones_dict = {}
+    now = datetime.now(utc)
+
+    for tz_name in all_timezones:
+        try:
+            tz = timezone(tz_name)
+            offset = tz.utcoffset(now)
+            if offset is not None:
+                hours, remainder = divmod(int(offset.total_seconds()), 3600)
+                minutes = remainder // 60
+                if minutes:
+                    offset_str = f"UTC{hours:+03d}:{minutes:02d}"
+                else:
+                    offset_str = f"UTC{hours:+03d}:00"
+                timezones_dict[tz_name] = f"{tz_name} ({offset_str})"
+        except Exception:
+            continue
+
+    # Sort by offset, then by name
+    sorted_timezones = sorted(
+        timezones_dict.items(), key=lambda x: (timezone(x[0]).utcoffset(now), x[0])
+    )
+    return sorted_timezones
+
 
 # test_config
 # flight_number = "SQ327"

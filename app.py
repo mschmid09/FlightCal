@@ -5,7 +5,12 @@ import pandas as pd
 from datetime import datetime
 from flask import Flask, render_template, request, send_file, session
 
-from core import get_flight, make_ics_from_selected_df_index, make_ics_from_manual_data
+from core import (
+    get_flight,
+    make_ics_from_selected_df_index,
+    make_ics_from_manual_data,
+    get_timezones_with_offsets,
+)
 
 app = Flask(__name__)
 
@@ -61,7 +66,8 @@ def create_ical_from_selected(index):
 
 @app.route("/manual_entry")
 def manual_entry():
-    return render_template("manual_entry.html")
+    timezones = get_timezones_with_offsets()
+    return render_template("manual_entry.html", timezones=timezones)
 
 
 @app.route("/create_manual_event", methods=["POST"])
@@ -104,8 +110,19 @@ def create_manual_event():
         if not re.match(r"^[A-Z]{3}$", flight_data["destination_airport_code"]):
             raise ValueError("Destination airport code must be 3 uppercase letters")
 
-        # Validate datetime format (YYYY-MM-DD HH:MM)
+        # Validate datetime format (datetime-local format: YYYY-MM-DDTHH:MM or YYYY-MM-DD HH:MM)
+        # Convert datetime-local format to the expected format
         try:
+            # Try datetime-local format first (YYYY-MM-DDTHH:MM)
+            if "T" in flight_data["scheduled_departure"]:
+                flight_data["scheduled_departure"] = flight_data[
+                    "scheduled_departure"
+                ].replace("T", " ")
+            if "T" in flight_data["scheduled_arrival"]:
+                flight_data["scheduled_arrival"] = flight_data[
+                    "scheduled_arrival"
+                ].replace("T", " ")
+
             datetime.strptime(flight_data["scheduled_departure"], "%Y-%m-%d %H:%M")
             datetime.strptime(flight_data["scheduled_arrival"], "%Y-%m-%d %H:%M")
         except ValueError:
@@ -118,7 +135,10 @@ def create_manual_event():
         return send_file(ics_data, as_attachment=True, download_name=f"{flight}.ics")
     except Exception as e:
         error_message = str(e)
-        return render_template("manual_entry.html", error=error_message)
+        timezones = get_timezones_with_offsets()
+        return render_template(
+            "manual_entry.html", error=error_message, timezones=timezones
+        )
 
 
 if __name__ == "__main__":

@@ -107,12 +107,29 @@
         .required {
             color: red;
         }
+        .error-message {
+            color: #ff4d4d;
+            background-color: #ffe6e6;
+            border: 1px solid #ff9999;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <div class="emoji">✈️</div>
     <h1>Manual Flight Entry</h1>
     <p>Enter your flight details manually</p>
+    
+    {% if error %}
+        <div class="error-message">
+        {{ error }}
+        </div>
+    {% endif %}
     
     <div class="form-container">
         <form action="/create_manual_event" method="post">
@@ -152,11 +169,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="scheduled_departure">Departure Time: <span class="required">*</span></label>
-                    <input type="text" id="scheduled_departure" name="scheduled_departure" required placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
+                    <input type="datetime-local" id="scheduled_departure" name="scheduled_departure" required>
                 </div>
                 <div class="form-group">
                     <label for="scheduled_arrival">Arrival Time: <span class="required">*</span></label>
-                    <input type="text" id="scheduled_arrival" name="scheduled_arrival" required placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
+                    <input type="datetime-local" id="scheduled_arrival" name="scheduled_arrival" required>
                 </div>
             </div>
             
@@ -165,44 +182,18 @@
                     <label for="origin_timezone">Origin Timezone: <span class="required">*</span></label>
                     <select id="origin_timezone" name="origin_timezone" required>
                         <option value="">Select timezone...</option>
-                        <option value="America/New_York">America/New_York (EST/EDT)</option>
-                        <option value="America/Chicago">America/Chicago (CST/CDT)</option>
-                        <option value="America/Denver">America/Denver (MST/MDT)</option>
-                        <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
-                        <option value="America/Anchorage">America/Anchorage (AKST/AKDT)</option>
-                        <option value="Pacific/Honolulu">Pacific/Honolulu (HST)</option>
-                        <option value="Europe/London">Europe/London (GMT/BST)</option>
-                        <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
-                        <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
-                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                        <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
-                        <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                        <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                        <option value="Asia/Hong_Kong">Asia/Hong_Kong (HKT)</option>
-                        <option value="Australia/Sydney">Australia/Sydney (AEDT/AEST)</option>
-                        <option value="UTC">UTC</option>
+                        {% for tz_name, tz_display in timezones %}
+                        <option value="{{ tz_name }}">{{ tz_display }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="destination_timezone">Destination Timezone: <span class="required">*</span></label>
                     <select id="destination_timezone" name="destination_timezone" required>
                         <option value="">Select timezone...</option>
-                        <option value="America/New_York">America/New_York (EST/EDT)</option>
-                        <option value="America/Chicago">America/Chicago (CST/CDT)</option>
-                        <option value="America/Denver">America/Denver (MST/MDT)</option>
-                        <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
-                        <option value="America/Anchorage">America/Anchorage (AKST/AKDT)</option>
-                        <option value="Pacific/Honolulu">Pacific/Honolulu (HST)</option>
-                        <option value="Europe/London">Europe/London (GMT/BST)</option>
-                        <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
-                        <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
-                        <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                        <option value="Asia/Shanghai">Asia/Shanghai (CST)</option>
-                        <option value="Asia/Dubai">Asia/Dubai (GST)</option>
-                        <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                        <option value="Asia/Hong_Kong">Asia/Hong_Kong (HKT)</option>
-                        <option value="Australia/Sydney">Australia/Sydney (AEDT/AEST)</option>
-                        <option value="UTC">UTC</option>
+                        {% for tz_name, tz_display in timezones %}
+                        <option value="{{ tz_name }}">{{ tz_display }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
