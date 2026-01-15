@@ -1,11 +1,9 @@
 """Tests for core.py functions with mocked API calls."""
 
 import io
-from datetime import datetime
 
 import pandas as pd
 import pytest
-from pytz import timezone
 
 from core import (
     drop_ununique_flights,
@@ -253,7 +251,7 @@ class TestGetFlight:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
         assert result.loc[0, "flight_number"] == "SQ327"
-        assert result.loc[0, "is_guess"] == False
+        assert not result.loc[0, "is_guess"]
         assert "nice_departure_date" in result.columns
         assert "nice_arrival_date" in result.columns
 
@@ -269,7 +267,7 @@ class TestGetFlight:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
-        assert result.loc[0, "is_guess"] == True
+        assert result.loc[0, "is_guess"]
 
     def test_get_flight_not_found_raises_error(self, mocker):
         """Test error when flight not found."""
