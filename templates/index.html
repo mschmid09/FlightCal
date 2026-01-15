@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,6 +66,20 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+        .manual-entry-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .manual-entry-button:hover {
+            background-color: #218838;
+        }
         .emoji {
             font-size: 5rem;
             cursor: pointer;
@@ -95,6 +111,7 @@
         <div class="error-message">
         {{ error }}
         </div>
+        <button class="manual-entry-button" onclick="window.location.href='/manual_entry'">Enter Flight Details Manually</button>
     {% endif %}
 
     <p>Enter your flight number and date to create an iCal event.</p>
@@ -103,7 +120,7 @@
         <input type="text" id="flight_number" name="flight_number" required oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"><br><br>
         
         <label for="flight_date">Flight Date:</label>
-        <input type="date" id="flight_date" name="flight_date" required><br><br>
+        <input type="text" id="flight_date" name="flight_date" required placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" title="Date format: yyyy-mm-dd"><br><br>
         
         <input type="submit" value="Create Event">
     </form>
@@ -113,8 +130,9 @@
         Made with ❤️ by <a href="https://mschm.id" target="_blank">Michael Schmid</a>
     </footer>
 <script>
-    document.querySelector('.emoji').addEventListener('click', function() {
+        document.querySelector('.emoji').addEventListener('click', function() {
         this.classList.toggle('clicked');
     });
 </script>
 </body>
+</html>

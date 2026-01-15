@@ -1,6 +1,6 @@
 import io
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 import icalendar
 import pandas as pd
@@ -207,8 +207,8 @@ def make_ical_event(data: dict):
     event = icalendar.Event()
     event.add(
         "summary",
-        f'🛫 {data["airline_name"]} {data["origin_airport_code"]} ➡️ '
-        f'{data["destination_airport_code"]} {data["flight_number"]}',
+        f"🛫 {data['airline_name']} {data['origin_airport_code']} ➡️ "
+        f"{data['destination_airport_code']} {data['flight_number']}",
     )
     origin_tz = timezone(data["origin_timezone"])
     destination_tz = timezone(data["destination_timezone"])
@@ -222,12 +222,12 @@ def make_ical_event(data: dict):
 
     event.add("dtstart", dtstart)
     event.add("dtend", dtend)
-    event.add("location", f'{data["origin_airport"]}')
+    event.add("location", f"{data['origin_airport']}")
     event.add(
         "description",
-        f'{data["airline_name"]} flight {data["flight_number"]} / Departs {data["origin_airport"]}, {data["origin_airport_code"]}',
+        f"{data['airline_name']} flight {data['flight_number']} / Departs {data['origin_airport']}, {data['origin_airport_code']}",
     )
-    event.add("dtstamp", datetime.now())
+    event.add("dtstamp", datetime.now(dt_timezone.utc))
 
     event.add("status", "CONFIRMED")
 
@@ -238,3 +238,44 @@ def make_ical_event(data: dict):
 def save_ical_event(ical_event: bytes):
     ical_bytes = io.BytesIO(ical_event)
     return ical_bytes
+
+
+def make_ics_from_manual_data(data: dict):
+    """Create iCal event from manually entered data."""
+    cal = icalendar.Calendar()
+    cal.add("prodid", "-//eluceo/ical//2.0/EN")
+    cal.add("version", "2.0")
+    cal.add("calscale", "GREGORIAN")
+    cal.add("method", "REQUEST")
+
+    event = icalendar.Event()
+    event.add(
+        "summary",
+        f"🛫 {data['airline_name']} {data['origin_airport_code']} ➡️ "
+        f"{data['destination_airport_code']} {data['flight_number']}",
+    )
+
+    origin_tz = timezone(data["origin_timezone"])
+    destination_tz = timezone(data["destination_timezone"])
+
+    # Parse datetime format "YYYY-MM-DD HH:MM" to datetime
+    dtstart = origin_tz.localize(
+        datetime.strptime(data["scheduled_departure"], "%Y-%m-%d %H:%M")
+    )
+    dtend = destination_tz.localize(
+        datetime.strptime(data["scheduled_arrival"], "%Y-%m-%d %H:%M")
+    )
+
+    event.add("dtstart", dtstart)
+    event.add("dtend", dtend)
+    event.add("location", f"{data['origin_airport']}")
+    event.add(
+        "description",
+        f"{data['airline_name']} flight {data['flight_number']} / Departs {data['origin_airport']}, {data['origin_airport_code']}",
+    )
+    event.add("dtstamp", datetime.now(dt_timezone.utc))
+    event.add("status", "CONFIRMED")
+
+    cal.add_component(event)
+    ical_event = cal.to_ical()
+    return save_ical_event(ical_event)

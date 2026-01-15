@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,6 +97,106 @@
         footer a:hover {
             text-decoration: underline;
         }
+        
+        .clock-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 10px;
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        
+        .clock-icon:hover {
+            transform: scale(1.2);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+        
+        .modal-content h2 {
+            margin-top: 0;
+        }
+        
+        .modal-content label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .modal-content input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        
+        .modal-content .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-content button {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .modal-content .save-button {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .modal-content .save-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .modal-content .cancel-button {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .modal-content .cancel-button:hover {
+            background-color: #545b62;
+        }
     
         @media (max-width: 600px) {
             body {
@@ -118,21 +220,42 @@
     <div class="card-container">
         {% for flight in flights %}
         <div class="card">
-            <h2>{{ flight.flight_number }}</h2>
+            <h2>{{ flight.flight_number }}
+                <span class="clock-icon" onclick="openEditModal({{ loop.index0 }})" title="Edit times">🕒</span>
+            </h2>
             <p>Airline: {{ flight.airline_name }}</p>
-            <p>Departure: {{ flight.nice_departure_date }}</p>
-            <p>Arrival: {{ flight.nice_arrival_date }}</p>
+            <p>Departure: <span id="departure-{{ loop.index0 }}">{{ flight.nice_departure_date }}</span></p>
+            <p>Arrival: <span id="arrival-{{ loop.index0 }}">{{ flight.nice_arrival_date }}</span></p>
             <p>From: {{ flight.origin_airport_code }}</p>
             <p>To: {{ flight.destination_airport_code }}</p>
-            <form action="/create_event/{{ loop.index0 }}" method="post">
+            <form action="/create_event/{{ loop.index0 }}" method="post" id="form-{{ loop.index0 }}">
                 <input type="hidden" name="flight_number" value="{{ flight.flight_number }}">
                 <input type="hidden" name="flight_date" value="{{ flight.scheduled_departure }}">
+                <input type="hidden" name="custom_departure" id="custom-departure-{{ loop.index0 }}" value="">
+                <input type="hidden" name="custom_arrival" id="custom-arrival-{{ loop.index0 }}" value="">
                 <input type="submit" value="Create Event">
             </form>
         </div>
         {% endfor %}
     </div>
     <button class="restart-button" onclick="window.location.href='/'">Restart</button>
+    
+    <!-- Time Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Flight Times</h2>
+            <label for="modal-departure">Departure Time:</label>
+            <input type="text" id="modal-departure" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
+            <label for="modal-arrival">Arrival Time:</label>
+            <input type="text" id="modal-arrival" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
+            <div class="button-group">
+                <button class="cancel-button" onclick="closeEditModal()">Cancel</button>
+                <button class="save-button" onclick="saveEditedTimes()">Save</button>
+            </div>
+        </div>
+    </div>
+    
     <footer>
         Don't miss your flight! 🛫<br>
         Contribute to this project on <a href="https://github.com/mschmidoev/FlightCal" target="_blank">GitHub</a><br>
@@ -142,6 +265,90 @@
         document.querySelector('.emoji').addEventListener('click', function() {
             this.classList.toggle('clicked');
         });
+        
+        let currentEditingIndex = null;
+        const flights = {{ flights | tojson }};
+        
+        function openEditModal(index) {
+            currentEditingIndex = index;
+            const modal = document.getElementById('editModal');
+            
+            // Parse the current times
+            const departure = flights[index].scheduled_departure;
+            const arrival = flights[index].scheduled_arrival;
+            
+            // Convert from "YYYYMMDD HHMM" to "YYYY-MM-DD HH:MM" format
+            const depDateTime = departure.substring(0, 4) + '-' + departure.substring(4, 6) + '-' + 
+                               departure.substring(6, 8) + ' ' + departure.substring(9, 11) + ':' + 
+                               departure.substring(11, 13);
+            const arrDateTime = arrival.substring(0, 4) + '-' + arrival.substring(4, 6) + '-' + 
+                               arrival.substring(6, 8) + ' ' + arrival.substring(9, 11) + ':' + 
+                               arrival.substring(11, 13);
+            
+            document.getElementById('modal-departure').value = depDateTime;
+            document.getElementById('modal-arrival').value = arrDateTime;
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingIndex = null;
+        }
+        
+        function saveEditedTimes() {
+            if (currentEditingIndex === null) return;
+            
+            const depValue = document.getElementById('modal-departure').value;
+            const arrValue = document.getElementById('modal-arrival').value;
+            
+            if (!depValue || !arrValue) {
+                alert('Please fill in both departure and arrival times.');
+                return;
+            }
+            
+            // Validate format yyyy-mm-dd hh:mm
+            const datetimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+            if (!datetimePattern.test(depValue) || !datetimePattern.test(arrValue)) {
+                alert('Please use the format: yyyy-mm-dd hh:mm (e.g., 2024-10-23 08:00)');
+                return;
+            }
+            
+            // Validate departure is before arrival
+            if (new Date(depValue.replace(' ', 'T')) >= new Date(arrValue.replace(' ', 'T'))) {
+                alert('Departure time must be before arrival time.');
+                return;
+            }
+            
+            // Convert from "YYYY-MM-DD HH:MM" format to "YYYYMMDD HHMM"
+            const depParts = depValue.split(' ');
+            const depDate = depParts[0].replace(/-/g, '');
+            const depTime = depParts[1].replace(/:/g, '');
+            const depFormatted = depDate + ' ' + depTime;
+            
+            const arrParts = arrValue.split(' ');
+            const arrDate = arrParts[0].replace(/-/g, '');
+            const arrTime = arrParts[1].replace(/:/g, '');
+            const arrFormatted = arrDate + ' ' + arrTime;
+            
+            // Update hidden form fields
+            document.getElementById('custom-departure-' + currentEditingIndex).value = depFormatted;
+            document.getElementById('custom-arrival-' + currentEditingIndex).value = arrFormatted;
+            
+            // Update display (keep the yyyy-mm-dd hh:mm format)
+            document.getElementById('departure-' + currentEditingIndex).textContent = depValue;
+            document.getElementById('arrival-' + currentEditingIndex).textContent = arrValue;
+            
+            closeEditModal();
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
     </script>
 </body>
 </html>

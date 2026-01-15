@@ -1,10 +1,11 @@
-import json
 import os
+import re
 
 import pandas as pd
+from datetime import datetime
 from flask import Flask, render_template, request, send_file, session
 
-from core import get_flight, make_ics_from_selected_df_index
+from core import get_flight, make_ics_from_selected_df_index, make_ics_from_manual_data
 
 app = Flask(__name__)
 
@@ -42,10 +43,82 @@ def create_ical_from_selected(index):
         return "No flight data found", 400
 
     df = pd.read_json(df_json, orient="split")
+
+    # Check if custom times were provided
+    custom_departure = request.form.get("custom_departure")
+    custom_arrival = request.form.get("custom_arrival")
+
+    if custom_departure and custom_arrival:
+        # Update the DataFrame with custom times
+        df.at[index, "scheduled_departure"] = custom_departure
+        df.at[index, "scheduled_arrival"] = custom_arrival
+
     ics_data = make_ics_from_selected_df_index(df, index)
     flight = df.iloc[index]["flight_number"]
 
     return send_file(ics_data, as_attachment=True, download_name=f"{flight}.ics")
+
+
+@app.route("/manual_entry")
+def manual_entry():
+    return render_template("manual_entry.html")
+
+
+@app.route("/create_manual_event", methods=["POST"])
+def create_manual_event():
+    try:
+        # Get all form data
+        flight_data = {
+            "flight_number": request.form.get("flight_number"),
+            "airline_name": request.form.get("airline_name"),
+            "origin_airport": request.form.get("origin_airport"),
+            "origin_airport_code": request.form.get("origin_airport_code"),
+            "destination_airport": request.form.get("destination_airport"),
+            "destination_airport_code": request.form.get("destination_airport_code"),
+            "scheduled_departure": request.form.get("scheduled_departure"),
+            "scheduled_arrival": request.form.get("scheduled_arrival"),
+            "origin_timezone": request.form.get("origin_timezone"),
+            "destination_timezone": request.form.get("destination_timezone"),
+        }
+
+        # Validate required fields
+        required_fields = [
+            "flight_number",
+            "airline_name",
+            "origin_airport",
+            "origin_airport_code",
+            "destination_airport",
+            "destination_airport_code",
+            "scheduled_departure",
+            "scheduled_arrival",
+            "origin_timezone",
+            "destination_timezone",
+        ]
+        for field in required_fields:
+            if not flight_data.get(field):
+                raise ValueError(f"Missing required field: {field}")
+
+        # Validate airport codes (should be 3 uppercase letters)
+        if not re.match(r"^[A-Z]{3}$", flight_data["origin_airport_code"]):
+            raise ValueError("Origin airport code must be 3 uppercase letters")
+        if not re.match(r"^[A-Z]{3}$", flight_data["destination_airport_code"]):
+            raise ValueError("Destination airport code must be 3 uppercase letters")
+
+        # Validate datetime format (YYYY-MM-DD HH:MM)
+        try:
+            datetime.strptime(flight_data["scheduled_departure"], "%Y-%m-%d %H:%M")
+            datetime.strptime(flight_data["scheduled_arrival"], "%Y-%m-%d %H:%M")
+        except ValueError:
+            raise ValueError("Invalid datetime format. Use: yyyy-mm-dd hh:mm")
+
+        # Create iCal file from manual data
+        ics_data = make_ics_from_manual_data(flight_data)
+        flight = flight_data["flight_number"]
+
+        return send_file(ics_data, as_attachment=True, download_name=f"{flight}.ics")
+    except Exception as e:
+        error_message = str(e)
+        return render_template("manual_entry.html", error=error_message)
 
 
 if __name__ == "__main__":
