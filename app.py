@@ -98,12 +98,12 @@ def create_manual_event():
         if not re.match(r"^[A-Z]{3}$", flight_data["destination_airport_code"]):
             raise ValueError("Destination airport code must be 3 uppercase letters")
         
-        # Validate datetime format (YYYY-MM-DDTHH:MM)
+        # Validate datetime format (YYYY-MM-DD HH:MM)
         try:
-            datetime.strptime(flight_data["scheduled_departure"], "%Y-%m-%dT%H:%M")
-            datetime.strptime(flight_data["scheduled_arrival"], "%Y-%m-%dT%H:%M")
+            datetime.strptime(flight_data["scheduled_departure"], "%Y-%m-%d %H:%M")
+            datetime.strptime(flight_data["scheduled_arrival"], "%Y-%m-%d %H:%M")
         except ValueError:
-            raise ValueError("Invalid datetime format for departure or arrival time")
+            raise ValueError("Invalid datetime format. Use: yyyy-mm-dd hh:mm")
         
         # Create iCal file from manual data
         ics_data = make_ics_from_manual_data(flight_data)

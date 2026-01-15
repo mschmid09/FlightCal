@@ -154,7 +154,7 @@
             font-weight: bold;
         }
         
-        .modal-content input[type="datetime-local"] {
+        .modal-content input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -246,9 +246,9 @@
             <span class="close" onclick="closeEditModal()">&times;</span>
             <h2>Edit Flight Times</h2>
             <label for="modal-departure">Departure Time:</label>
-            <input type="datetime-local" id="modal-departure">
+            <input type="text" id="modal-departure" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
             <label for="modal-arrival">Arrival Time:</label>
-            <input type="datetime-local" id="modal-arrival">
+            <input type="text" id="modal-arrival" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
             <div class="button-group">
                 <button class="cancel-button" onclick="closeEditModal()">Cancel</button>
                 <button class="save-button" onclick="saveEditedTimes()">Save</button>
@@ -277,12 +277,12 @@
             const departure = flights[index].scheduled_departure;
             const arrival = flights[index].scheduled_arrival;
             
-            // Convert from "YYYYMMDD HHMM" to datetime-local format "YYYY-MM-DDTHH:MM"
+            // Convert from "YYYYMMDD HHMM" to "YYYY-MM-DD HH:MM" format
             const depDateTime = departure.substring(0, 4) + '-' + departure.substring(4, 6) + '-' + 
-                               departure.substring(6, 8) + 'T' + departure.substring(9, 11) + ':' + 
+                               departure.substring(6, 8) + ' ' + departure.substring(9, 11) + ':' + 
                                departure.substring(11, 13);
             const arrDateTime = arrival.substring(0, 4) + '-' + arrival.substring(4, 6) + '-' + 
-                               arrival.substring(6, 8) + 'T' + arrival.substring(9, 11) + ':' + 
+                               arrival.substring(6, 8) + ' ' + arrival.substring(9, 11) + ':' + 
                                arrival.substring(11, 13);
             
             document.getElementById('modal-departure').value = depDateTime;
@@ -307,19 +307,26 @@
                 return;
             }
             
+            // Validate format yyyy-mm-dd hh:mm
+            const datetimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+            if (!datetimePattern.test(depValue) || !datetimePattern.test(arrValue)) {
+                alert('Please use the format: yyyy-mm-dd hh:mm (e.g., 2024-10-23 08:00)');
+                return;
+            }
+            
             // Validate departure is before arrival
-            if (new Date(depValue) >= new Date(arrValue)) {
+            if (new Date(depValue.replace(' ', 'T')) >= new Date(arrValue.replace(' ', 'T'))) {
                 alert('Departure time must be before arrival time.');
                 return;
             }
             
-            // Convert from datetime-local format to "YYYYMMDD HHMM"
-            const depParts = depValue.split('T');
+            // Convert from "YYYY-MM-DD HH:MM" format to "YYYYMMDD HHMM"
+            const depParts = depValue.split(' ');
             const depDate = depParts[0].replace(/-/g, '');
             const depTime = depParts[1].replace(/:/g, '');
             const depFormatted = depDate + ' ' + depTime;
             
-            const arrParts = arrValue.split('T');
+            const arrParts = arrValue.split(' ');
             const arrDate = arrParts[0].replace(/-/g, '');
             const arrTime = arrParts[1].replace(/:/g, '');
             const arrFormatted = arrDate + ' ' + arrTime;
@@ -328,11 +335,9 @@
             document.getElementById('custom-departure-' + currentEditingIndex).value = depFormatted;
             document.getElementById('custom-arrival-' + currentEditingIndex).value = arrFormatted;
             
-            // Update display
-            const depDisplay = depValue.replace('T', ' ').substring(0, 16);
-            const arrDisplay = arrValue.replace('T', ' ').substring(0, 16);
-            document.getElementById('departure-' + currentEditingIndex).textContent = depDisplay;
-            document.getElementById('arrival-' + currentEditingIndex).textContent = arrDisplay;
+            // Update display (keep the yyyy-mm-dd hh:mm format)
+            document.getElementById('departure-' + currentEditingIndex).textContent = depValue;
+            document.getElementById('arrival-' + currentEditingIndex).textContent = arrValue;
             
             closeEditModal();
         }

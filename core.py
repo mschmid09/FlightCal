@@ -258,12 +258,12 @@ def make_ics_from_manual_data(data: dict):
     origin_tz = timezone(data["origin_timezone"])
     destination_tz = timezone(data["destination_timezone"])
 
-    # Parse datetime-local format "YYYY-MM-DDTHH:MM" to datetime
+    # Parse datetime format "YYYY-MM-DD HH:MM" to datetime
     dtstart = origin_tz.localize(
-        datetime.strptime(data["scheduled_departure"], "%Y-%m-%dT%H:%M")
+        datetime.strptime(data["scheduled_departure"], "%Y-%m-%d %H:%M")
     )
     dtend = destination_tz.localize(
-        datetime.strptime(data["scheduled_arrival"], "%Y-%m-%dT%H:%M")
+        datetime.strptime(data["scheduled_arrival"], "%Y-%m-%d %H:%M")
     )
 
     event.add("dtstart", dtstart)
