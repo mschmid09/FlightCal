@@ -2,15 +2,15 @@
 name = "flightcal"
 version = "0.1.0"
 description = "Flight calendar event generator"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "Flask==3.0.3",
     "icalendar==6.0.1",
-    "pandas==2.0.3",
+    "pandas>=2.2.0",
     "pyflightdata==0.8.6.2",
     "pytz==2024.1",
     "gunicorn==23.0.0",
-    "numpy==1.24.4",
+    "numpy>=1.26.0",
 ]
 
 [dependency-groups]
