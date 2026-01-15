@@ -207,8 +207,8 @@ def make_ical_event(data: dict):
     event = icalendar.Event()
     event.add(
         "summary",
-        f'🛫 {data["airline_name"]} {data["origin_airport_code"]} ➡️ '
-        f'{data["destination_airport_code"]} {data["flight_number"]}',
+        f"🛫 {data['airline_name']} {data['origin_airport_code']} ➡️ "
+        f"{data['destination_airport_code']} {data['flight_number']}",
     )
     origin_tz = timezone(data["origin_timezone"])
     destination_tz = timezone(data["destination_timezone"])
@@ -222,10 +222,10 @@ def make_ical_event(data: dict):
 
     event.add("dtstart", dtstart)
     event.add("dtend", dtend)
-    event.add("location", f'{data["origin_airport"]}')
+    event.add("location", f"{data['origin_airport']}")
     event.add(
         "description",
-        f'{data["airline_name"]} flight {data["flight_number"]} / Departs {data["origin_airport"]}, {data["origin_airport_code"]}',
+        f"{data['airline_name']} flight {data['flight_number']} / Departs {data['origin_airport']}, {data['origin_airport_code']}",
     )
     event.add("dtstamp", datetime.now(dt_timezone.utc))
 
@@ -251,10 +251,10 @@ def make_ics_from_manual_data(data: dict):
     event = icalendar.Event()
     event.add(
         "summary",
-        f'🛫 {data["airline_name"]} {data["origin_airport_code"]} ➡️ '
-        f'{data["destination_airport_code"]} {data["flight_number"]}',
+        f"🛫 {data['airline_name']} {data['origin_airport_code']} ➡️ "
+        f"{data['destination_airport_code']} {data['flight_number']}",
     )
-    
+
     origin_tz = timezone(data["origin_timezone"])
     destination_tz = timezone(data["destination_timezone"])
 
@@ -268,10 +268,10 @@ def make_ics_from_manual_data(data: dict):
 
     event.add("dtstart", dtstart)
     event.add("dtend", dtend)
-    event.add("location", f'{data["origin_airport"]}')
+    event.add("location", f"{data['origin_airport']}")
     event.add(
         "description",
-        f'{data["airline_name"]} flight {data["flight_number"]} / Departs {data["origin_airport"]}, {data["origin_airport_code"]}',
+        f"{data['airline_name']} flight {data['flight_number']} / Departs {data['origin_airport']}, {data['origin_airport_code']}",
     )
     event.add("dtstamp", datetime.now(dt_timezone.utc))
     event.add("status", "CONFIRMED")
