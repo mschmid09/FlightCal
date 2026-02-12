@@ -49,14 +49,24 @@ def create_ical_from_selected(index):
 
     df = pd.read_json(df_json, orient="split")
 
-    # Check if custom times were provided
-    custom_departure = request.form.get("custom_departure")
-    custom_arrival = request.form.get("custom_arrival")
+    # Check if any custom fields were provided (user edited the flight)
+    custom_fields = {
+        "flight_number": request.form.get("flight_number"),
+        "airline_name": request.form.get("airline_name"),
+        "origin_airport": request.form.get("origin_airport"),
+        "origin_airport_code": request.form.get("origin_airport_code"),
+        "destination_airport": request.form.get("destination_airport"),
+        "destination_airport_code": request.form.get("destination_airport_code"),
+        "scheduled_departure": request.form.get("scheduled_departure"),
+        "scheduled_arrival": request.form.get("scheduled_arrival"),
+        "origin_timezone": request.form.get("origin_timezone"),
+        "destination_timezone": request.form.get("destination_timezone"),
+    }
 
-    if custom_departure and custom_arrival:
-        # Update the DataFrame with custom times
-        df.at[index, "scheduled_departure"] = custom_departure
-        df.at[index, "scheduled_arrival"] = custom_arrival
+    # Update the DataFrame with custom fields if they were provided
+    for field, value in custom_fields.items():
+        if value:
+            df.at[index, field] = value
 
     ics_data = make_ics_from_selected_df_index(df, index)
     flight = df.iloc[index]["flight_number"]

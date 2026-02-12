@@ -98,7 +98,7 @@
             text-decoration: underline;
         }
         
-        .clock-icon {
+        .edit-icon {
             cursor: pointer;
             font-size: 1.2rem;
             margin-left: 10px;
@@ -106,7 +106,7 @@
             transition: transform 0.2s ease;
         }
         
-        .clock-icon:hover {
+        .edit-icon:hover {
             transform: scale(1.2);
         }
         
@@ -123,12 +123,14 @@
         
         .modal-content {
             background-color: white;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .close {
@@ -221,18 +223,24 @@
         {% for flight in flights %}
         <div class="card">
             <h2>{{ flight.flight_number }}
-                <span class="clock-icon" onclick="openEditModal({{ loop.index0 }})" title="Edit times">🕒</span>
+                <span class="edit-icon" onclick="openEditModal({{ loop.index0 }})" title="Edit flight details">✏️</span>
             </h2>
-            <p>Airline: {{ flight.airline_name }}</p>
+            <p>Airline: <span id="airline-{{ loop.index0 }}">{{ flight.airline_name }}</span></p>
             <p>Departure: <span id="departure-{{ loop.index0 }}">{{ flight.nice_departure_date }}</span></p>
             <p>Arrival: <span id="arrival-{{ loop.index0 }}">{{ flight.nice_arrival_date }}</span></p>
-            <p>From: {{ flight.origin_airport_code }}</p>
-            <p>To: {{ flight.destination_airport_code }}</p>
+            <p>From: <span id="from-{{ loop.index0 }}">{{ flight.origin_airport_code }}</span></p>
+            <p>To: <span id="to-{{ loop.index0 }}">{{ flight.destination_airport_code }}</span></p>
             <form action="/create_event/{{ loop.index0 }}" method="post" id="form-{{ loop.index0 }}">
-                <input type="hidden" name="flight_number" value="{{ flight.flight_number }}">
-                <input type="hidden" name="flight_date" value="{{ flight.scheduled_departure }}">
-                <input type="hidden" name="custom_departure" id="custom-departure-{{ loop.index0 }}" value="">
-                <input type="hidden" name="custom_arrival" id="custom-arrival-{{ loop.index0 }}" value="">
+                <input type="hidden" name="flight_number" id="hidden-flight-number-{{ loop.index0 }}" value="{{ flight.flight_number }}">
+                <input type="hidden" name="airline_name" id="hidden-airline-{{ loop.index0 }}" value="{{ flight.airline_name }}">
+                <input type="hidden" name="origin_airport" id="hidden-origin-airport-{{ loop.index0 }}" value="{{ flight.origin_airport }}">
+                <input type="hidden" name="origin_airport_code" id="hidden-origin-code-{{ loop.index0 }}" value="{{ flight.origin_airport_code }}">
+                <input type="hidden" name="destination_airport" id="hidden-destination-airport-{{ loop.index0 }}" value="{{ flight.destination_airport }}">
+                <input type="hidden" name="destination_airport_code" id="hidden-destination-code-{{ loop.index0 }}" value="{{ flight.destination_airport_code }}">
+                <input type="hidden" name="scheduled_departure" id="hidden-scheduled-departure-{{ loop.index0 }}" value="{{ flight.scheduled_departure }}">
+                <input type="hidden" name="scheduled_arrival" id="hidden-scheduled-arrival-{{ loop.index0 }}" value="{{ flight.scheduled_arrival }}">
+                <input type="hidden" name="origin_timezone" id="hidden-origin-tz-{{ loop.index0 }}" value="{{ flight.origin_timezone }}">
+                <input type="hidden" name="destination_timezone" id="hidden-destination-tz-{{ loop.index0 }}" value="{{ flight.destination_timezone }}">
                 <input type="submit" value="Create Event">
             </form>
         </div>
@@ -240,18 +248,34 @@
     </div>
     <button class="restart-button" onclick="window.location.href='/'">Restart</button>
     
-    <!-- Time Edit Modal -->
+    <!-- Edit Flight Details Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeEditModal()">&times;</span>
-            <h2>Edit Flight Times</h2>
+            <h2>Edit Flight Details</h2>
+            <label for="modal-flight-number">Flight Number:</label>
+            <input type="text" id="modal-flight-number" placeholder="e.g., BA929">
+            <label for="modal-airline">Airline Name:</label>
+            <input type="text" id="modal-airline" placeholder="e.g., British Airways">
+            <label for="modal-origin-airport">Origin Airport:</label>
+            <input type="text" id="modal-origin-airport" placeholder="e.g., Hannover Langenhagen Airport">
+            <label for="modal-origin-code">Origin Airport Code:</label>
+            <input type="text" id="modal-origin-code" placeholder="e.g., HAJ">
+            <label for="modal-destination-airport">Destination Airport:</label>
+            <input type="text" id="modal-destination-airport" placeholder="e.g., London Heathrow Airport">
+            <label for="modal-destination-code">Destination Airport Code:</label>
+            <input type="text" id="modal-destination-code" placeholder="e.g., LHR">
             <label for="modal-departure">Departure Time:</label>
             <input type="text" id="modal-departure" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
             <label for="modal-arrival">Arrival Time:</label>
             <input type="text" id="modal-arrival" placeholder="yyyy-mm-dd hh:mm" pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: yyyy-mm-dd hh:mm (24-hour)">
+            <label for="modal-origin-timezone">Origin Timezone:</label>
+            <input type="text" id="modal-origin-timezone" placeholder="e.g., Europe/Berlin">
+            <label for="modal-destination-timezone">Destination Timezone:</label>
+            <input type="text" id="modal-destination-timezone" placeholder="e.g., Europe/London">
             <div class="button-group">
                 <button class="cancel-button" onclick="closeEditModal()">Cancel</button>
-                <button class="save-button" onclick="saveEditedTimes()">Save</button>
+                <button class="save-button" onclick="saveEditedDetails()">Save</button>
             </div>
         </div>
     </div>
@@ -272,10 +296,11 @@
         function openEditModal(index) {
             currentEditingIndex = index;
             const modal = document.getElementById('editModal');
+            const flight = flights[index];
             
             // Parse the current times
-            const departure = flights[index].scheduled_departure;
-            const arrival = flights[index].scheduled_arrival;
+            const departure = flight.scheduled_departure;
+            const arrival = flight.scheduled_arrival;
             
             // Convert from "YYYYMMDD HHMM" to "YYYY-MM-DD HH:MM" format
             const depDateTime = departure.substring(0, 4) + '-' + departure.substring(4, 6) + '-' + 
@@ -285,8 +310,17 @@
                                arrival.substring(6, 8) + ' ' + arrival.substring(9, 11) + ':' + 
                                arrival.substring(11, 13);
             
+            // Populate modal fields with current flight data
+            document.getElementById('modal-flight-number').value = flight.flight_number;
+            document.getElementById('modal-airline').value = flight.airline_name;
+            document.getElementById('modal-origin-airport').value = flight.origin_airport;
+            document.getElementById('modal-origin-code').value = flight.origin_airport_code;
+            document.getElementById('modal-destination-airport').value = flight.destination_airport;
+            document.getElementById('modal-destination-code').value = flight.destination_airport_code;
             document.getElementById('modal-departure').value = depDateTime;
             document.getElementById('modal-arrival').value = arrDateTime;
+            document.getElementById('modal-origin-timezone').value = flight.origin_timezone;
+            document.getElementById('modal-destination-timezone').value = flight.destination_timezone;
             
             modal.style.display = 'block';
         }
@@ -296,14 +330,24 @@
             currentEditingIndex = null;
         }
         
-        function saveEditedTimes() {
+        function saveEditedDetails() {
             if (currentEditingIndex === null) return;
             
+            const index = currentEditingIndex;
+            const flightNumber = document.getElementById('modal-flight-number').value;
+            const airline = document.getElementById('modal-airline').value;
+            const originAirport = document.getElementById('modal-origin-airport').value;
+            const originCode = document.getElementById('modal-origin-code').value;
+            const destinationAirport = document.getElementById('modal-destination-airport').value;
+            const destinationCode = document.getElementById('modal-destination-code').value;
             const depValue = document.getElementById('modal-departure').value;
             const arrValue = document.getElementById('modal-arrival').value;
+            const originTimezone = document.getElementById('modal-origin-timezone').value;
+            const destinationTimezone = document.getElementById('modal-destination-timezone').value;
             
-            if (!depValue || !arrValue) {
-                alert('Please fill in both departure and arrival times.');
+            // Validate required fields
+            if (!flightNumber || !airline || !depValue || !arrValue || !originTimezone || !destinationTimezone) {
+                alert('Please fill in all required fields.');
                 return;
             }
             
@@ -331,13 +375,24 @@
             const arrTime = arrParts[1].replace(/:/g, '');
             const arrFormatted = arrDate + ' ' + arrTime;
             
-            // Update hidden form fields
-            document.getElementById('custom-departure-' + currentEditingIndex).value = depFormatted;
-            document.getElementById('custom-arrival-' + currentEditingIndex).value = arrFormatted;
+            // Update all hidden form fields with edited data
+            document.getElementById('hidden-flight-number-' + index).value = flightNumber;
+            document.getElementById('hidden-airline-' + index).value = airline;
+            document.getElementById('hidden-origin-airport-' + index).value = originAirport;
+            document.getElementById('hidden-origin-code-' + index).value = originCode;
+            document.getElementById('hidden-destination-airport-' + index).value = destinationAirport;
+            document.getElementById('hidden-destination-code-' + index).value = destinationCode;
+            document.getElementById('hidden-scheduled-departure-' + index).value = depFormatted;
+            document.getElementById('hidden-scheduled-arrival-' + index).value = arrFormatted;
+            document.getElementById('hidden-origin-tz-' + index).value = originTimezone;
+            document.getElementById('hidden-destination-tz-' + index).value = destinationTimezone;
             
-            // Update display (keep the yyyy-mm-dd hh:mm format)
-            document.getElementById('departure-' + currentEditingIndex).textContent = depValue;
-            document.getElementById('arrival-' + currentEditingIndex).textContent = arrValue;
+            // Update display
+            document.getElementById('airline-' + index).textContent = airline;
+            document.getElementById('departure-' + index).textContent = depValue;
+            document.getElementById('arrival-' + index).textContent = arrValue;
+            document.getElementById('from-' + index).textContent = originCode;
+            document.getElementById('to-' + index).textContent = destinationCode;
             
             closeEditModal();
         }

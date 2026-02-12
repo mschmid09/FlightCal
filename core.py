@@ -53,6 +53,11 @@ def get_flight(flight_number: str, date: str) -> pd.DataFrame:
     flight_number = parse_flight_number(flight_number)
     date = parse_date(date)
     flight_info = find_flights_with_date(flight_number, date)
+
+    # Normalize flight_info to a list if it's a dict
+    if isinstance(flight_info, dict):
+        flight_info = list(flight_info.values())
+
     if not flight_info:
         try:
             flight_info = find_flight_no_date(flight_number)
@@ -123,7 +128,66 @@ def parse_flight_info(flight_info: dict, chosen_flight_index: int) -> dict:
         + " "
         + flight_info[n]["time"]["scheduled"]["arrival_time"]
     )
-    airline_name = flight_info[n]["airline"]["name"]
+    # Handle cases where airline is 'None' string or missing
+    airline = flight_info[n].get("airline")
+    if isinstance(airline, dict) and airline.get("name"):
+        airline_name = airline["name"]
+    else:
+        # Try to extract airline code from flight number (e.g., "BA" from "BA929")
+        match = re.match(r"([A-Z]+)", flight_number)
+        if match:
+            airline_code = match.group(1)
+            # Map common airline codes to names
+            airline_map = {
+                "BA": "British Airways",
+                "AA": "American Airlines",
+                "UA": "United Airlines",
+                "LH": "Lufthansa",
+                "AF": "Air France",
+                "KL": "KLM",
+                "IB": "Iberia",
+                "AS": "Alaska Airlines",
+                "DL": "Delta Air Lines",
+                "SW": "Southwest Airlines",
+                "EK": "Emirates",
+                "QF": "Qantas",
+                "SQ": "Singapore Airlines",
+                "NH": "All Nippon Airways",
+                "CX": "Cathay Pacific",
+                "AC": "Air Canada",
+                "OS": "Austrian Airlines",
+                "AZ": "Alitalia",
+                "BE": "Brussels Airlines",
+                "CA": "Air China",
+                "CI": "China Airlines",
+                "CM": "China Eastern Airlines",
+                "CZ": "China Southern Airlines",
+                "EY": "Etihad Airways",
+                "FI": "Icelandair",
+                "GA": "Garuda Indonesia",
+                "G3": "GOL",
+                "HA": "Hawaiian Airlines",
+                "JL": "Japan Airlines",
+                "LA": "LATAM Airlines",
+                "LX": "Swiss International Air Lines",
+                "MH": "Malaysia Airlines",
+                "NZ": "Air New Zealand",
+                "PR": "Philippine Airlines",
+                "QR": "Qatar Airways",
+                "RJ": "Royal Jordanian",
+                "SK": "SAS",
+                "SN": "Brussels Airlines",
+                "TG": "Thai Airways",
+                "TK": "Turkish Airlines",
+                "TP": "TAP Air Portugal",
+                "VN": "Vietnam Airlines",
+                "VX": "Virgin America",
+                "WN": "Southwest Airlines",
+            }
+            airline_name = airline_map.get(airline_code, f"Airline ({airline_code})")
+        else:
+            airline_name = "Unknown Airline"
+
     origin_airport = flight_info[n]["airport"]["origin"]["name"]
     destination_airport = flight_info[n]["airport"]["destination"]["name"]
     origin_timezone = flight_info[n]["airport"]["origin"]["timezone"]["name"]
@@ -186,17 +250,20 @@ def find_flight_no_date(flight_number: str):
     return flight_info
 
 
-def drop_ununique_flights(flight_info: dict) -> dict:
+def drop_ununique_flights(flight_info) -> list:
     # only keeps flights which have a different scheduled departure time (ignoring date)
     unique_departure_times = set()
     unique_flights = []
-    for flight in flight_info:
+    # Handle both list and dict returns from the API
+    flights_list = (
+        flight_info if isinstance(flight_info, list) else list(flight_info.values())
+    )
+    for flight in flights_list:
         departure_time = flight["time"]["scheduled"]["departure_time"]
         if departure_time not in unique_departure_times:
             unique_departure_times.add(departure_time)
             unique_flights.append(flight)
-    flight_info = unique_flights
-    return flight_info
+    return unique_flights
 
 
 def move_flight_date(flight_info: dict, date: str):
